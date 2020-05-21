@@ -1,0 +1,68 @@
+#If you don't already have the required libraries installed in your environment install them using the next line  
+#install.packages(c("neuralnet", "caret", "tidyverse", "mlbench", "e1071"))
+
+#Incase you are already ready, import these libraries so as to start cooking
+
+```{r}
+library(neuralnet)
+library(caret)
+library(tidyverse)
+library(mlbench)
+library(e1071)
+
+```
+#importing dataset and getting an initial view of it
+
+```{r}
+data("PimaIndiansDiabetes")
+df <- PimaIndiansDiabetes
+str(PimaIndiansDiabetes)
+ggplot(df, aes(diabetes, fill = as.factor(diabetes))) + geom_bar()
+
+```
+#Making diabetes values as binary numbers - 0, 1 reflecting diabetic or not
+
+```{r}
+df$binary <- ifelse(df$diabetes == "neg", 0, 1)
+str(df)
+
+```
+#preparing model for evaluation
+
+```{r}
+rows <- createDataPartition(df$binary, times =1, p = .7, list = F)
+train <- df[rows,]
+test <- df[-rows,]
+
+```
+#diabetes and binary are representation of the same thing so we drop diabetes
+
+```{r}
+train <- train[,-9]
+test <- test[,-9]
+str(train)
+str(test)
+
+```
+#training our model to make predictions. Roughly slicing 30-70 for our test-train datasets 
+
+```{r}
+
+model <- train(as.factor(binary) ~ ., data = train, method = "ranger",
+               trControl = trainControl(method = "repeatedcv", number = 5, repeats = 5))
+
+model
+
+```
+#making a confusion matrix to determine accuracy of our predict() method
+
+```{r}
+pred_train <- predict(model, train)
+pred_test <- predict(model, test)
+
+#pred_train
+
+confusionMatrix(pred_train, as.factor(train$binary))
+confusionMatrix(pred_test, as.factor(test$binary))
+
+```
